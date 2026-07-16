@@ -302,30 +302,40 @@
         }
     }
 
-    // 5. 노래 제어 함수 (재생/정지)
-    function togglePlay(songId, songFile) {
-        if (checkExpiration()) return;
+function togglePlay(songId, songFile) {
+    if (checkExpiration()) return;
 
-        // 다른 노래가 이미 재생 중이었다면 정지
-        if (currentPlayingId && currentPlayingId !== songId) {
-            audio.pause();
-        }
-
-        // 재생 상태 전환
-        if (currentPlayingId === songId && !audio.paused) {
-            audio.pause();
-            charHeader.innerText = "☆(❁´◡`❁)☆"; // 정지하면 원래 표정
-        } else {
-            deductPlayCount(songId); 
-            
-            currentPlayingId = songId;
-            audio.src = songFile;
-            audio.play();
-            charHeader.innerText = "⸜(*╹▽╹*)⚝"; // 노래 재생 시 우주 테마에 맞춰 반짝이는 신난 표정
-        }
-
+    // 같은 곡이 재생 중이면 정지만 한다.
+    if (currentPlayingId === songId && !audio.paused) {
+        audio.pause();
+        charHeader.innerText = "☆(❁´◡`❁)☆";
         renderPlaylist();
+        return;
     }
+
+    // 같은 곡을 정지했다가 다시 재생하는 경우
+    if (currentPlayingId === songId && audio.paused) {
+        audio.play();
+        charHeader.innerText = "⸜(*╹▽╹*)⚝";
+        renderPlaylist();
+        return;
+    }
+
+    // 다른 곡으로 변경하는 경우
+    if (currentPlayingId && currentPlayingId !== songId) {
+        audio.pause();
+    }
+
+    // 새 곡 재생 시에만 차감
+    deductPlayCount(songId);
+
+    currentPlayingId = songId;
+    audio.src = songFile;
+    audio.play();
+    charHeader.innerText = "⸜(*╹▽╹*)⚝";
+
+    renderPlaylist();
+}
 
     // 6. 한 노래가 완전히 끝났을 때 처리
     audio.onended = function() {
