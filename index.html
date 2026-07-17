@@ -175,7 +175,20 @@
     <h2 class="pageTitle">부여받은 본인번호만 재생하세요~ 타인번호 재생시 제제됩니다.</h2>    
     
     <!-- 오디오 엘리먼트 (화면에서 숨김) -->
-    <audio id="audioPlayer"></audio>
+<video
+    id="videoPlayer"
+    width="100%"
+    height="400"
+    controls
+    playsinline
+    preload="metadata"
+    style="
+        width:100%;
+        margin:20px 0;
+        border-radius:15px;
+        background:#000;
+    ">
+</video>
     
     <!-- 재생 목록 영역 -->
     <ul class="playlist" id="playlist"></ul>
@@ -188,7 +201,7 @@
 </div>
 
 <script>
-    const audio = document.getElementById('audioPlayer');
+    const video = document.getElementById('videoPlayer');
     const playlistContainer = document.getElementById('playlist');
     const globalErrorMsg = document.getElementById('globalErrorMsg');
     const pageTitle = document.getElementById('pageTitle');
@@ -196,10 +209,10 @@
 
     // 1. ⚙️ 노래 목록 및 기한 설정
     const songs = [
-        { id: "song1", title: "🌌 1번 ", file: "열이상.mp3" },
-        { id: "song2", title: "🪐 2번 ", file: "music2.mp3" },
-        { id: "song3", title: "☄️ 3번 ", file: "music3.mp3" }
-    ];
+    { id: "song1", title: "🎬 1번 영상", file: "video1.mp4" },
+    { id: "song2", title: "🎬 2번 영상", file: "video2.mp4" },
+    { id: "song3", title: "🎬 3번 영상", file: "video3.mp4" }
+];
 
     const maxPlays = 4; // 최대 재생 횟수
 
@@ -216,12 +229,11 @@
     function checkExpiration() {
         const now = new Date();
         if (now > expirationDate) {
-            if (!audio.paused) {
-                audio.pause();
-                audio.src = '';
-                currentPlayingId = null;
-            }
-
+        if (!video.paused) {
+        video.pause();
+        video.src = '';
+        currentPlayingId = null;
+    }
             songs.forEach(song => {
                 localStorage.setItem(`playCount_${song.id}`, maxPlays);
             });
@@ -240,58 +252,95 @@
     }
 
     // 3. 플레이리스트 그리기
-    function renderPlaylist() {
-        playlistContainer.innerHTML = '';
-        let allDisabled = true;
-        
-        songs.forEach(song => {
-            const playCount = parseInt(localStorage.getItem(`playCount_${song.id}`)) || 0;
-            const remaining = maxPlays - playCount;
-            const isDisabled = remaining <= 0;
+function renderPlaylist() {
+    playlistContainer.innerHTML = '';
+    let allDisabled = true;
 
-            if (!isDisabled) {
-                allDisabled = false;
-            }
+    songs.forEach(song => {
 
-            const li = document.createElement('li');
-            li.className = `playlist-item ${isDisabled ? 'disabled' : ''} ${currentPlayingId === song.id ? 'active' : ''}`;
-            li.id = `item_${song.id}`;
+        const playCount =
+            parseInt(localStorage.getItem(`playCount_${song.id}`)) || 0;
 
-            const infoDiv = document.createElement('div');
-            infoDiv.className = 'song-info';
-            
-            const titleDiv = document.createElement('div');
-            titleDiv.className = 'song-title';
-            titleDiv.innerText = song.title;
+        const remaining = maxPlays - playCount;
 
-            const countDiv = document.createElement('div');
-            countDiv.className = 'song-count';
-            countDiv.innerText = isDisabled ? "모든 재생횟수 소진! ❌" : `남은 노래 재생 횟수: ✨ ${remaining}회`;
+        const isDisabled = remaining <= 0;
 
-            infoDiv.appendChild(titleDiv);
-            infoDiv.appendChild(countDiv);
+        if (!isDisabled) allDisabled = false;
 
-            const btn = document.createElement('button');
-            btn.className = `play-btn ${isDisabled ? 'disabled' : ''} ${(currentPlayingId === song.id && !audio.paused) ? 'playing' : ''}`;
-            btn.innerText = (currentPlayingId === song.id && !audio.paused) ? "정지" : "재생";
-            
-            if (!isDisabled) {
-                btn.onclick = () => togglePlay(song.id, song.file);
-            }
+        const li = document.createElement('li');
 
-            li.appendChild(infoDiv);
-            li.appendChild(btn);
-            playlistContainer.appendChild(li);
-        });
+        li.className =
+            `playlist-item ${
+                isDisabled ? 'disabled' : ''
+            } ${
+                currentPlayingId === song.id ? 'active' : ''
+            }`;
 
-        // 만약 모든 노래의 횟수를 소진했다면 슬픈 요정 화면으로 전환
-        if (allDisabled) {
-            playlistContainer.style.display = 'none';
-            charHeader.innerText = "＼(^_^)／";
-            charHeader.style.animation = 'none';
-            globalErrorMsg.style.display = 'block';
+        li.id = `item_${song.id}`;
+
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'song-info';
+
+        const titleDiv = document.createElement('div');
+        titleDiv.className = 'song-title';
+        titleDiv.innerText = song.title;
+
+        const countDiv = document.createElement('div');
+        countDiv.className = 'song-count';
+
+        if (isDisabled) {
+            countDiv.innerText = "모든 재생횟수 소진! ❌";
+        } else {
+            countDiv.innerText =
+                `남은 영상 재생 횟수 : ✨ ${remaining}회`;
         }
+
+        infoDiv.appendChild(titleDiv);
+        infoDiv.appendChild(countDiv);
+
+        const btn = document.createElement('button');
+
+        btn.className =
+            `play-btn ${
+                isDisabled ? 'disabled' : ''
+            } ${
+                currentPlayingId === song.id &&
+                !video.paused
+                    ? 'playing'
+                    : ''
+            }`;
+
+        btn.innerText =
+            currentPlayingId === song.id &&
+            !video.paused
+                ? "정지"
+                : "재생";
+
+        if (!isDisabled) {
+            btn.onclick = () => {
+                togglePlay(song.id, song.file);
+            };
+        }
+
+        li.appendChild(infoDiv);
+        li.appendChild(btn);
+
+        playlistContainer.appendChild(li);
+
+    });
+
+    if (allDisabled) {
+
+        playlistContainer.style.display = 'none';
+
+        charHeader.innerText = "＼(^_^)／";
+
+        charHeader.style.animation = 'none';
+
+        globalErrorMsg.style.display = 'block';
+
     }
+}
 
     // 4. 재생 횟수를 실제로 1 차감시키는 내부 함수
     function deductPlayCount(songId) {
@@ -302,49 +351,75 @@
         }
     }
 
-function togglePlay(songId, songFile) {
+function togglePlay(songId, videoFile) {
+
     if (checkExpiration()) return;
 
-    // 같은 곡이 재생 중이면 정지만 한다.
-    if (currentPlayingId === songId && !audio.paused) {
-        audio.pause();
+    // 같은 영상이 재생 중이면 정지
+    if (currentPlayingId === songId && !video.paused) {
+
+        video.pause();
+
         charHeader.innerText = "☆(❁´◡`❁)☆";
+
         renderPlaylist();
+
         return;
     }
 
-    // 같은 곡을 정지했다가 다시 재생하는 경우
-    if (currentPlayingId === songId && audio.paused) {
-        audio.play();
+    // 같은 영상을 정지 후 다시 재생
+    if (currentPlayingId === songId && video.paused) {
+
+        video.play();
+
         charHeader.innerText = "⸜(*╹▽╹*)⚝";
+
         renderPlaylist();
+
         return;
     }
 
-    // 다른 곡으로 변경하는 경우
+    // 다른 영상 선택
     if (currentPlayingId && currentPlayingId !== songId) {
-        audio.pause();
+
+        video.pause();
+
     }
 
-    // 새 곡 재생 시에만 차감
+    // 새 영상만 재생횟수 차감
     deductPlayCount(songId);
 
     currentPlayingId = songId;
-    audio.src = songFile;
-    audio.play();
+
+    video.src = videoFile;
+
+    video.load();
+
+    video.play();
+
     charHeader.innerText = "⸜(*╹▽╹*)⚝";
 
     renderPlaylist();
 }
 
     // 6. 한 노래가 완전히 끝났을 때 처리
-    audio.onended = function() {
-        currentPlayingId = null;
-        audio.src = ''; 
-        charHeader.innerText = "☆(❁´◡`❁)☆";
-        renderPlaylist();
-        checkExpiration();
-    };
+video.onended = function() {
+
+    currentPlayingId = null;
+
+    video.pause();
+
+    video.removeAttribute("src");
+
+    video.load();
+
+    charHeader.innerText = "☆(❁´◡`❁)☆";
+
+    renderPlaylist();
+
+    checkExpiration();
+
+};
 
     // 7. 1초마다 실시간 유효 시간 체크
     liveTimer = setInterval(() => {
