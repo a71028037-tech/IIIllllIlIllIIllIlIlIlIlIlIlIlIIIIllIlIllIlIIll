@@ -195,19 +195,59 @@ volume.oninput = ()=>{
     volumeText.textContent = Math.round(volume.value * 100) + "%";
 };
 
-muteBtn.onclick = ()=>{
+let lastVolume = 1;
 
-    video.muted = !video.muted;
 
-    if(video.muted){
-        muteBtn.innerHTML = "🔇 음소거 해제";
-        volume.value = 0;
-        volumeText.textContent = "0%";
-    }else{
-        muteBtn.innerHTML = "🔊 음소거";
-        volume.value = video.volume;
-        volumeText.textContent = Math.round(video.volume * 100) + "%";
+// 볼륨 조절
+volume.oninput = function(){
+
+    let value = Number(this.value);
+
+    video.volume = value;
+
+    if(value > 0){
+        video.muted = false;
+        lastVolume = value;
+        muteBtn.innerHTML="🔊 음소거";
     }
+
+    volumeText.textContent =
+        Math.round(value * 100) + "%";
+
+};
+
+
+// 음소거 버튼
+muteBtn.onclick=function(){
+
+    if(video.muted || video.volume === 0){
+
+        video.muted = false;
+
+        video.volume = lastVolume;
+
+        volume.value = lastVolume;
+
+        volumeText.textContent =
+            Math.round(lastVolume * 100)+"%";
+
+        muteBtn.innerHTML="🔊 음소거";
+
+    }
+    else{
+
+        lastVolume = video.volume;
+
+        video.muted = true;
+
+        volume.value = 0;
+
+        volumeText.textContent="0%";
+
+        muteBtn.innerHTML="🔇 음소거 해제";
+
+    }
+
 };
 
 video.addEventListener("contextmenu", e=>{
