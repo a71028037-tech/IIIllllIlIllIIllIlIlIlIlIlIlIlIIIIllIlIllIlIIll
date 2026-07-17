@@ -8,6 +8,8 @@
 body{
     margin:0;
     background:#111;
+    color:white;
+    font-family:Arial;
     display:flex;
     justify-content:center;
     align-items:center;
@@ -15,104 +17,238 @@ body{
 }
 
 #player{
-    width:640px;
-    height:360px;
-    background:#000;
-    position:relative;
+    width:700px;
+    text-align:center;
 }
 
 video{
     width:100%;
-    height:100%;
-    object-fit:contain;
-    background:#000;
+    background:black;
 }
 
-#playBtn{
-    position:absolute;
-    left:50%;
-    top:50%;
-    transform:translate(-50%,-50%);
-    padding:15px 40px;
-    font-size:20px;
+#controls{
+    margin-top:15px;
+}
+
+button{
+    padding:10px 20px;
+    margin:5px;
+    font-size:16px;
     cursor:pointer;
+}
+
+button:disabled{
+    background:#555;
+    color:#aaa;
+    cursor:not-allowed;
+}
+
+#info{
+    margin-bottom:15px;
+    font-size:18px;
 }
 </style>
 
 </head>
+
 <body>
 
 <div id="player">
 
+<div id="info">
+총 재생 가능 : <span id="maxCount"></span>회<br>
+사용 횟수 : <span id="used"></span>회<br>
+남은 재생 횟수 : <span id="remain"></span>회
+</div>
+
+
 <video
 id="video"
+playsinline
 controlsList="nodownload nofullscreen noremoteplayback"
 disablePictureInPicture
-playsinline
 >
     <source src="SUNSHINE LOVE.mp4" type="video/mp4">
 </video>
 
-<button id="playBtn">▶ 재생</button>
+
+<div id="controls">
+
+<button id="playBtn">
+▶ 재생
+</button>
+
+<button id="pauseBtn">
+⏸ 일시정지
+</button>
+
+<button id="pipBtn">
+🗔 PiP
+</button>
 
 </div>
 
+
+</div>
+
+
 <script>
+
 
 const MAX_PLAY = 3;
 const STORAGE_KEY = "video_play_count";
 
+
 const video = document.getElementById("video");
-const btn = document.getElementById("playBtn");
+
+const playBtn = document.getElementById("playBtn");
+const pauseBtn = document.getElementById("pauseBtn");
+const pipBtn = document.getElementById("pipBtn");
+
+
+const maxCount = document.getElementById("maxCount");
+const used = document.getElementById("used");
+const remain = document.getElementById("remain");
+
 
 let count = Number(localStorage.getItem(STORAGE_KEY) || 0);
 
-if(count >= MAX_PLAY){
-    btn.innerText="재생횟수 초과";
-    btn.disabled=true;
+
+
+function updateInfo(){
+
+    let left = MAX_PLAY - count;
+
+    maxCount.innerText = MAX_PLAY;
+    used.innerText = count;
+    remain.innerText = left;
+
+
+    // 남은 횟수 없으면 재생버튼 잠금
+    if(left <= 0){
+
+        playBtn.disabled = true;
+        playBtn.innerText="재생 불가";
+
+    }else{
+
+        playBtn.disabled = false;
+        playBtn.innerText="▶ 재생";
+
+    }
+
 }
 
-btn.onclick = async ()=>{
+
+updateInfo();
+
+
+
+// 재생 + 자동 PiP
+playBtn.onclick = async()=>{
+
 
     if(count >= MAX_PLAY){
-        alert("재생 가능한 횟수를 모두 사용했습니다.");
+
+        alert("재생 가능 횟수를 모두 사용했습니다.");
         return;
+
     }
+
 
     count++;
-    localStorage.setItem(STORAGE_KEY,count);
 
-    btn.style.display="none";
+    localStorage.setItem(
+        STORAGE_KEY,
+        count
+    );
+
+
+    updateInfo();
+
+
 
     try{
+
         await video.play();
-    }catch(e){
-        alert("재생 실패");
-    }
 
-    // PiP 실행 시도
-    if(document.pictureInPictureEnabled){
-        try{
+
+        // 자동 PiP 실행
+        if(document.pictureInPictureEnabled){
+
             await video.requestPictureInPicture();
-        }catch(e){
-            console.log("PiP 지원 안됨");
+
         }
+
+
+    }catch(e){
+
+        console.log(
+            "PiP 실행 제한:",
+            e
+        );
+
     }
 
-}
 
-// 영상 끝나면 버튼 다시 표시
-video.onended=function(){
-    btn.style.display="block";
-    btn.innerText="▶ 다시 재생";
-}
+};
 
-// 우클릭 금지
-video.addEventListener("contextmenu",e=>{
+
+
+// 일시정지
+pauseBtn.onclick=()=>{
+
+    video.pause();
+
+};
+
+
+
+// PiP 버튼
+pipBtn.onclick=async()=>{
+
+
+    try{
+
+
+        if(document.pictureInPictureElement){
+
+            await document.exitPictureInPicture();
+
+
+        }else{
+
+
+            await video.requestPictureInPicture();
+
+
+        }
+
+
+    }catch(e){
+
+        alert(
+            "PiP를 지원하지 않는 브라우저입니다."
+        );
+
+    }
+
+
+};
+
+
+
+// 우클릭 방지
+video.addEventListener(
+"contextmenu",
+e=>{
     e.preventDefault();
 });
 
+
+
 </script>
+
 
 </body>
 </html>
